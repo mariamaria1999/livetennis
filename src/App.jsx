@@ -224,12 +224,12 @@ function ReservationCard({ name }) {
             color: COLORS.line,
           }}
         >
-          BOOK TO PLAY
+          88.888% BUSY
         </span>
       </div>
 
       <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.85, margin: 0 }}>
-        Reserved by the slot via Varaamo, for a fee. This court isn't tracked here — check Varaamo for open times.
+        Any chance to play here?
       </p>
 
       <a
@@ -252,7 +252,7 @@ function ReservationCard({ name }) {
           display: 'inline-block',
         }}
       >
-        Open Varaamo ↗
+        Check Varaamo ↗
       </a>
     </div>
   );
@@ -337,7 +337,7 @@ function CourtCard({ courtKey, court, now, onReport }) {
               whiteSpace: 'nowrap',
             }}
           >
-            next ~{freeAtLabel}
+            free ~{freeAtLabel}
             <span
               title="Estimated as reported busy time + 1 hour."
               style={{
@@ -998,8 +998,7 @@ export default function CourtWatch() {
           </button>
         </div>
         <p style={{ color: COLORS.line, opacity: 0.75, fontSize: 14, marginTop: 6, marginBottom: 14, maxWidth: 520 }}>
-          Courts 2 &amp; 3 are reported by players — tap Free or Busy. Court 1 is booked by the slot via Varaamo and
-          isn't tracked here.
+          Keep it live. Tap Free or Busy. One tap helps all!
         </p>
         <CourtLines />
 
