@@ -958,7 +958,7 @@ export default function CourtWatch() {
                 marginBottom: 6,
               }}
             >
-              Live court status
+              Court status, powered by you & the community.
             </div>
             <h1
               style={{
