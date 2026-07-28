@@ -157,7 +157,6 @@ function linkStyle(color) {
     borderBottom: `1px solid ${color}40`,
     padding: '0 0 1px 0',
     cursor: 'pointer',
-    alignSelf: 'flex-start',
   };
 }
 
@@ -174,6 +173,23 @@ function btnStyle(color, bg, border) {
     borderRadius: 2,
     padding: '14px 20px',
     cursor: 'pointer',
+  };
+}
+
+function reportBtnStyle(color, rgb) {
+  return {
+    fontFamily: "'Archivo', sans-serif",
+    fontSize: 13,
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.02em',
+    color,
+    background: `rgba(${rgb}, 0.08)`,
+    border: `1.5px solid ${color}`,
+    borderRadius: 2,
+    padding: '16px 22px',
+    cursor: 'pointer',
+    flex: 1,
   };
 }
 
@@ -276,16 +292,12 @@ function CourtCard({ courtKey, court, now, onReport }) {
   // reports are always recorded), but the estimate below intentionally always assumes 60 min.
   const avgDuration = deriveAvgDurationMin(reports);
 
-  let message;
+  let message = null;
   let freeAtLabel = null;
   if (displayBusy) {
     const assumedMin = DEFAULT_SESSION_MIN;
-    const remaining = assumedMin - elapsedMs / 60000;
     freeAtLabel = formatClockTime((busyStart ?? now) + assumedMin * 60000);
-    message =
-      remaining > 2
-        ? `Assuming ~${DEFAULT_SESSION_MIN} min play time — might free up around ${freeAtLabel}.`
-        : `Assuming ~${DEFAULT_SESSION_MIN} min play time — could free up any time now.`;
+    // No message here on purpose — the info icon next to the "free ~" badge explains the estimate.
   } else if (!latest) {
     message = 'No reports yet — be the first.';
   } else if (!lowConfidence) {
@@ -339,7 +351,7 @@ function CourtCard({ courtKey, court, now, onReport }) {
           >
             free ~{freeAtLabel}
             <span
-              title="Estimated as reported busy time + 1 hour."
+              title="Estimated based on a 60-minute session. Actual availability may vary."
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -388,9 +400,11 @@ function CourtCard({ courtKey, court, now, onReport }) {
         {displayBusy && <DigitTiles text={formatElapsed(elapsedMs)} />}
       </div>
 
-      <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.65, margin: 0 }}>
-        {message}
-      </p>
+      {message && (
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.65, margin: 0 }}>
+          {message}
+        </p>
+      )}
 
       <div style={{ display: 'flex', gap: 12 }}>
         <button
@@ -398,7 +412,7 @@ function CourtCard({ courtKey, court, now, onReport }) {
             onReport(courtKey, false);
             showToast('Thanks — marked free.');
           }}
-          style={btnStyle(COLORS.line, 'transparent', COLORS.border)}
+          style={reportBtnStyle(COLORS.green, '60,107,69')}
         >
           Free
         </button>
@@ -407,11 +421,15 @@ function CourtCard({ courtKey, court, now, onReport }) {
             onReport(courtKey, true);
             showToast('Thanks — marked busy.');
           }}
-          style={btnStyle(COLORS.line, 'transparent', COLORS.border)}
+          style={reportBtnStyle(COLORS.clay, '176,64,47')}
         >
           Busy
         </button>
       </div>
+
+      <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 12, color: COLORS.muted, margin: 0, opacity: 0.85 }}>
+        👀 At the court? Your update keeps it live.
+      </p>
 
       <div
         style={{
@@ -754,7 +772,7 @@ function NameModal({ initialValue, showModeChoice, onSubmit, onCancel }) {
         <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 11, color: COLORS.line, opacity: 0.6, margin: 0 }}>
           Shown next to your report with the time. Asked fresh each time — not saved on this device.
         </p>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', alignItems: 'center' }}>
           <button onClick={onCancel} style={linkStyle(COLORS.line)}>
             Cancel
           </button>
