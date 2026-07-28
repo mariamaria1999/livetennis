@@ -294,10 +294,15 @@ function CourtCard({ courtKey, court, now, onReport }) {
 
   let message = null;
   let freeAtLabel = null;
+  let remainingNote = null;
   if (displayBusy) {
     const assumedMin = DEFAULT_SESSION_MIN;
+    const remainingMin = assumedMin - elapsedMs / 60000;
     freeAtLabel = formatClockTime((busyStart ?? now) + assumedMin * 60000);
-    // No message here on purpose — the info icon next to the "free ~" badge explains the estimate.
+    remainingNote =
+      remainingMin > 2
+        ? `Assuming a ${DEFAULT_SESSION_MIN}-min session — expected free around ${freeAtLabel}.`
+        : `Assuming a ${DEFAULT_SESSION_MIN}-min session — could free up any time now.`;
   } else if (!latest) {
     message = 'No reports yet — be the first.';
   } else if (!lowConfidence) {
@@ -336,43 +341,6 @@ function CourtCard({ courtKey, court, now, onReport }) {
         >
           {court.name}
         </span>
-        {displayBusy && freeAtLabel && (
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: 12,
-              fontWeight: 600,
-              color: COLORS.muted,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            free ~{freeAtLabel}
-            <span
-              title="Estimated based on a 60-minute session. Actual availability may vary."
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 13,
-                height: 13,
-                borderRadius: '50%',
-                border: `1px solid ${COLORS.muted}`,
-                fontFamily: "'Archivo', sans-serif",
-                fontSize: 9,
-                fontWeight: 600,
-                fontStyle: 'italic',
-                color: COLORS.muted,
-                cursor: 'help',
-                flexShrink: 0,
-              }}
-            >
-              i
-            </span>
-          </span>
-        )}
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -392,13 +360,19 @@ function CourtCard({ courtKey, court, now, onReport }) {
             fontSize: 32,
             fontWeight: 700,
             letterSpacing: '0.01em',
-            color: COLORS.line,
+            color: dotColor,
           }}
         >
           {statusLabel}
         </span>
         {displayBusy && <DigitTiles text={formatElapsed(elapsedMs)} />}
       </div>
+
+      {displayBusy && freeAtLabel && (
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.muted, margin: 0 }}>
+          {remainingNote}
+        </p>
+      )}
 
       {message && (
         <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.65, margin: 0 }}>
