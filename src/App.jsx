@@ -634,9 +634,7 @@ function ScheduleTable({ courts, now }) {
           maxWidth: 480,
         }}
       >
-        Each hour reflects the latest report by that point in time — a busy report followed by "free" later in the
-        same hour shows as free. Hours with no reports assume free. Court 1 runs on Varaamo reservations and isn't
-        shown here.
+        Hours with no reports assume free. 
       </p>
     </div>
   );
@@ -973,7 +971,7 @@ export default function CourtWatch() {
                 letterSpacing: '-0.005em',
               }}
             >
-              Is the court free?
+              COURT FREE NOW
             </h1>
           </div>
           <button
