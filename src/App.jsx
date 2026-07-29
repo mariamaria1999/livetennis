@@ -118,16 +118,41 @@ function deriveAvgDurationMin(reports) {
 
 function DigitTiles({ text }) {
   return (
-    <span
-      style={{
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: 14,
-        fontWeight: 500,
-        letterSpacing: '0.02em',
-        color: COLORS.muted,
-      }}
-    >
-      {text}
+    <span style={{ display: 'inline-flex', gap: 3 }}>
+      {text.split('').map((ch, i) => (
+        <span
+          key={i}
+          style={{
+            position: 'relative',
+            minWidth: ch === ':' ? 10 : 20,
+            textAlign: 'center',
+            background: COLORS.surface,
+            border: `1.5px solid ${COLORS.bg}`,
+            borderRadius: 2,
+            padding: '3px 2px',
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: 15,
+            fontWeight: 700,
+            color: COLORS.bg,
+            overflow: 'hidden',
+            display: 'inline-block',
+          }}
+        >
+          {ch}
+          {ch !== ':' && (
+            <span
+              style={{
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                top: '50%',
+                height: 1,
+                background: `${COLORS.bg}33`,
+              }}
+            />
+          )}
+        </span>
+      ))}
     </span>
   );
 }
@@ -423,7 +448,7 @@ function CourtCard({ courtKey, court, now, onReport }) {
                 opacity: 0.5,
               }}
             >
-              LOGNOTES
+              Today's reports
             </span>
             <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: COLORS.muted }}>
               {recentLog.length}
