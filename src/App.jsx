@@ -494,7 +494,6 @@ function LegendDot({ color, label, ring, hatched, title }) {
 }
 
 function ScheduleTable({ courts, now }) {
-  const [showLegend, setShowLegend] = useState(false);
   const hours = [];
   for (let h = OPEN_HOUR; h < CLOSE_HOUR; h++) hours.push(h);
   const todayKey = new Date().toDateString();
@@ -520,10 +519,7 @@ function ScheduleTable({ courts, now }) {
     const hourStart = hourStartDate.getTime();
     const hourEnd = hourStart + 60 * 60 * 1000;
     if (hourStart >= now) return 'future';
-    const isNowHour = now >= hourStart && now < hourEnd;
-    const evalAt = Math.min(hourEnd, now);
-    const busy = stateAt(eventsFor(court), evalAt) === true;
-    if (isNowHour) return busy ? 'now-busy' : 'now-free';
+    const busy = stateAt(eventsFor(court), Math.min(hourEnd, now)) === true;
     return busy ? 'busy' : 'free';
   };
 
@@ -537,71 +533,23 @@ function ScheduleTable({ courts, now }) {
         border: `1px solid ${COLORS.line}22`,
       };
     if (status === 'busy') return { ...base, background: COLORS.clay };
-    if (status === 'free') return { ...base, background: COLORS.green };
-    if (status === 'now-busy') return { ...base, background: 'transparent', border: `2.5px solid ${COLORS.clay}` };
-    if (status === 'now-free') return { ...base, background: 'transparent', border: `2.5px solid ${COLORS.green}` };
-    return base;
+    return { ...base, background: COLORS.green };
   };
 
   return (
     <div style={{ marginTop: 40 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-        <div
-          style={{
-            fontFamily: "'Archivo', sans-serif",
-            fontSize: 12,
-            letterSpacing: '0.12em',
-            textTransform: 'uppercase',
-            color: COLORS.line,
-            opacity: 0.55,
-          }}
-        >
-          TODAY · {OPEN_HOUR}:00–{CLOSE_HOUR}:00
-        </div>
-        <span
-          style={{ position: 'relative', display: 'inline-flex' }}
-          onMouseEnter={() => setShowLegend(true)}
-          onMouseLeave={() => setShowLegend(false)}
-        >
-          <span
-            onClick={() => setShowLegend((o) => !o)}
-            role="button"
-            aria-label="Show legend"
-            style={{ fontSize: 14, lineHeight: 1, cursor: 'pointer' }}
-          >
-            🎾
-          </span>
-          {showLegend && (
-            <div
-              onClick={() => setShowLegend(false)}
-              style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'transparent' }}
-            />
-          )}
-          {showLegend && (
-            <div
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                position: 'absolute',
-                top: 'calc(100% + 8px)',
-                left: 0,
-                background: COLORS.surface,
-                border: `1px solid ${COLORS.border}`,
-                borderRadius: 4,
-                boxShadow: '0 8px 24px rgba(17,17,17,0.12)',
-                padding: '12px 14px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 8,
-                whiteSpace: 'nowrap',
-                zIndex: 50,
-              }}
-            >
-              <LegendDot color={COLORS.green} label="Free" title="Hours with no reports assume free." />
-              <LegendDot color={COLORS.clay} label="Busy" />
-              <LegendDot color={COLORS.clay} ring label="Now" />
-            </div>
-          )}
-        </span>
+      <div
+        style={{
+          fontFamily: "'Archivo', sans-serif",
+          fontSize: 12,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: COLORS.line,
+          opacity: 0.55,
+          marginBottom: 14,
+        }}
+      >
+        TODAY · {OPEN_HOUR}:00–{CLOSE_HOUR}:00
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ borderCollapse: 'separate', borderSpacing: 5 }}>
