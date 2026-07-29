@@ -130,16 +130,6 @@ function DigitTiles({ text }) {
   );
 }
 
-function CourtLines() {
-  return (
-    <svg width="100%" height="20" viewBox="0 0 400 20" preserveAspectRatio="none" style={{ display: 'block', opacity: 0.35 }}>
-      <line x1="0" y1="3" x2="400" y2="3" stroke={COLORS.line} strokeWidth="1.5" />
-      <line x1="70" y1="14" x2="330" y2="14" stroke={COLORS.line} strokeWidth="1" strokeDasharray="4 4" />
-      <line x1="200" y1="3" x2="200" y2="14" stroke={COLORS.line} strokeWidth="1" />
-    </svg>
-  );
-}
-
 function linkStyle(color) {
   return {
     background: 'transparent',
@@ -1106,7 +1096,6 @@ export default function CourtWatch() {
             {showHelp && <AboutPopover onClose={() => setShowHelp(false)} />}
           </div>
         </div>
-        <CourtLines />
 
         {configMissing ? (
           <div
@@ -1151,38 +1140,6 @@ export default function CourtWatch() {
           </div>
         ) : (
           <>
-            <div
-              style={{
-                display: 'flex',
-                gap: 20,
-                margin: '32px 0 28px',
-                flexWrap: 'wrap',
-                fontFamily: "'Archivo', sans-serif",
-                fontSize: 14,
-                color: COLORS.line,
-              }}
-            >
-              {COURT_KEYS.map((key) => {
-                const c = courts[key];
-                if (c.type === 'reserved') return null;
-                const { statusLabel, displayBusy } = deriveCourtState(c, now);
-                return (
-                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: '50%',
-                        background: displayBusy ? COLORS.clay : COLORS.green,
-                        display: 'inline-block',
-                      }}
-                    />
-                    {c.name}: {statusLabel.toLowerCase()}
-                  </div>
-                );
-              })}
-            </div>
-
             <ScheduleTable courts={courts} now={now} />
 
             <div
