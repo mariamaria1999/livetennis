@@ -423,7 +423,7 @@ function CourtCard({ courtKey, court, now, onReport }) {
                 opacity: 0.5,
               }}
             >
-              Today's reports
+              LOGNOTES
             </span>
             <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: COLORS.muted }}>
               {recentLog.length}
