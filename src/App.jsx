@@ -118,23 +118,24 @@ function deriveAvgDurationMin(reports) {
 
 function DigitTiles({ text }) {
   return (
-    <span style={{ display: 'flex', gap: 3, width: '100%' }}>
+    <span style={{ display: 'inline-flex', gap: 4 }}>
       {text.split('').map((ch, i) => (
         <span
           key={i}
           style={{
             position: 'relative',
-            flex: ch === ':' ? '0 0 10px' : 1,
+            minWidth: ch === ':' ? 10 : 22,
             textAlign: 'center',
             background: COLORS.surface,
-            border: `1.5px solid ${COLORS.bg}`,
-            borderRadius: 2,
-            padding: '6px 2px',
-            fontFamily: "'IBM Plex Mono', monospace",
+            border: `1.5px solid ${COLORS.muted}`,
+            borderRadius: 6,
+            padding: '6px 3px',
+            fontFamily: "'Orbitron', 'IBM Plex Mono', monospace",
             fontSize: 17,
             fontWeight: 700,
             color: COLORS.bg,
             overflow: 'hidden',
+            display: 'inline-block',
           }}
         >
           {ch}
@@ -146,7 +147,7 @@ function DigitTiles({ text }) {
                 right: 0,
                 top: '50%',
                 height: 1,
-                background: `${COLORS.bg}33`,
+                background: `${COLORS.muted}55`,
               }}
             />
           )}
@@ -313,10 +314,7 @@ function CourtCard({ courtKey, court, now, onReport }) {
     const assumedMin = DEFAULT_SESSION_MIN;
     const remainingMin = assumedMin - elapsedMs / 60000;
     freeAtLabel = formatClockTime((busyStart ?? now) + assumedMin * 60000);
-    remainingNote =
-      remainingMin > 2
-        ? `Assuming a ${DEFAULT_SESSION_MIN}-min session — expected free around ${freeAtLabel}.`
-        : `Assuming a ${DEFAULT_SESSION_MIN}-min session — could free up any time now.`;
+    remainingNote = remainingMin > 2 ? `might be free around ${freeAtLabel}.` : `might be free any time now.`;
   } else if (!latest) {
     message = 'No reports yet — be the first.';
   } else if (!lowConfidence) {
