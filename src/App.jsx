@@ -118,24 +118,23 @@ function deriveAvgDurationMin(reports) {
 
 function DigitTiles({ text }) {
   return (
-    <span style={{ display: 'inline-flex', gap: 3 }}>
+    <span style={{ display: 'flex', gap: 3, width: '100%' }}>
       {text.split('').map((ch, i) => (
         <span
           key={i}
           style={{
             position: 'relative',
-            minWidth: ch === ':' ? 10 : 20,
+            flex: ch === ':' ? '0 0 10px' : 1,
             textAlign: 'center',
             background: COLORS.surface,
             border: `1.5px solid ${COLORS.bg}`,
             borderRadius: 2,
-            padding: '3px 2px',
+            padding: '6px 2px',
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: 15,
+            fontSize: 17,
             fontWeight: 700,
             color: COLORS.bg,
             overflow: 'hidden',
-            display: 'inline-block',
           }}
         >
           {ch}
@@ -380,8 +379,9 @@ function CourtCard({ courtKey, court, now, onReport }) {
         >
           {statusLabel}
         </span>
-        {displayBusy && <DigitTiles text={formatElapsed(elapsedMs)} />}
       </div>
+
+      {displayBusy && <DigitTiles text={formatElapsed(elapsedMs)} />}
 
       {displayBusy && freeAtLabel && (
         <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.muted, margin: 0 }}>
