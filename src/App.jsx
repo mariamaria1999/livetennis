@@ -486,6 +486,7 @@ function LegendDot({ color, label, ring, hatched, title }) {
 }
 
 function ScheduleTable({ courts, now }) {
+  const [mapOpen, setMapOpen] = useState(false);
   const hours = [];
   for (let h = OPEN_HOUR; h < CLOSE_HOUR; h++) hours.push(h);
   const todayKey = new Date().toDateString();
@@ -578,6 +579,23 @@ function ScheduleTable({ courts, now }) {
                     whiteSpace: 'nowrap',
                   }}
                 >
+                  <button
+                    onClick={() => setMapOpen(true)}
+                    aria-label="Which court is which"
+                    title="Which court is which?"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      padding: 0,
+                      marginRight: 4,
+                      fontSize: 12,
+                      lineHeight: 1,
+                      cursor: 'pointer',
+                      verticalAlign: 'middle',
+                    }}
+                  >
+                    📍
+                  </button>
                   {courts[key].name}
                 </td>
                 {hours.map((h) => (
@@ -590,6 +608,56 @@ function ScheduleTable({ courts, now }) {
           </tbody>
         </table>
       </div>
+
+      {mapOpen && (
+        <div
+          onClick={() => setMapOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+            zIndex: 80,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: COLORS.surface,
+              borderRadius: 4,
+              padding: 16,
+              maxWidth: 640,
+              width: '100%',
+              maxHeight: '85vh',
+              overflow: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 600, color: COLORS.bg }}>
+                Which court is which?
+              </span>
+              <button
+                onClick={() => setMapOpen(false)}
+                aria-label="Close"
+                style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', color: COLORS.bg, lineHeight: 1 }}
+              >
+                &times;
+              </button>
+            </div>
+            <img
+              src={COURT_MAP_IMAGE}
+              alt="Map showing Court 1, Court 2, and Court 3 side by side, with the entry point marked."
+              style={{ width: '100%', borderRadius: 8, display: 'block' }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -906,7 +974,6 @@ export default function CourtWatch() {
   const [connectionError, setConnectionError] = useState(false);
   const [configMissing, setConfigMissing] = useState(!firebaseConfigured);
   const [showHelp, setShowHelp] = useState(false);
-  const [mapOpen, setMapOpen] = useState(false);
   const [nameModalOpen, setNameModalOpen] = useState(false);
   const [pendingReport, setPendingReport] = useState(null);
 
@@ -1053,110 +1120,40 @@ export default function CourtWatch() {
               Powered by you &amp; the community.
             </p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div
+            style={{ position: 'relative' }}
+            onMouseEnter={() => setShowHelp(true)}
+            onMouseLeave={() => setShowHelp(false)}
+          >
             <button
-              onClick={() => setMapOpen(true)}
-              aria-label="Which court is which"
-              title="Which court is which?"
+              onClick={() => setShowHelp((o) => !o)}
+              aria-label="About this project"
               style={{
                 flexShrink: 0,
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                border: `1px solid ${COLORS.yellow}88`,
                 background: 'transparent',
-                border: 'none',
-                color: COLORS.line,
-                fontSize: 20,
-                lineHeight: 1,
+                color: COLORS.yellow,
+                fontFamily: "'Archivo', sans-serif",
+                fontSize: 14,
+                fontWeight: 600,
                 cursor: 'pointer',
                 marginTop: 2,
-                padding: 0,
               }}
             >
-              📍
+              ?
             </button>
-            <div
-              style={{ position: 'relative' }}
-              onMouseEnter={() => setShowHelp(true)}
-              onMouseLeave={() => setShowHelp(false)}
-            >
-              <button
-                onClick={() => setShowHelp((o) => !o)}
-                aria-label="About this project"
-                style={{
-                  flexShrink: 0,
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  border: `1px solid ${COLORS.yellow}88`,
-                  background: 'transparent',
-                  color: COLORS.yellow,
-                  fontFamily: "'Archivo', sans-serif",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  marginTop: 2,
-                }}
-              >
-                ?
-              </button>
-              {showHelp && (
-                <div
-                  onClick={() => setShowHelp(false)}
-                  style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'transparent' }}
-                />
-              )}
-              {showHelp && <AboutPopover onClose={() => setShowHelp(false)} />}
-            </div>
+            {showHelp && (
+              <div
+                onClick={() => setShowHelp(false)}
+                style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'transparent' }}
+              />
+            )}
+            {showHelp && <AboutPopover onClose={() => setShowHelp(false)} />}
           </div>
         </div>
-
-        {mapOpen && (
-          <div
-            onClick={() => setMapOpen(false)}
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.6)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 20,
-              zIndex: 80,
-            }}
-          >
-            <div
-              onClick={(e) => e.stopPropagation()}
-              style={{
-                background: COLORS.surface,
-                borderRadius: 4,
-                padding: 16,
-                maxWidth: 640,
-                width: '100%',
-                maxHeight: '85vh',
-                overflow: 'auto',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 12,
-              }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 600, color: COLORS.bg }}>
-                  Which court is which?
-                </span>
-                <button
-                  onClick={() => setMapOpen(false)}
-                  aria-label="Close"
-                  style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', color: COLORS.bg, lineHeight: 1 }}
-                >
-                  &times;
-                </button>
-              </div>
-              <img
-                src={COURT_MAP_IMAGE}
-                alt="Map showing Court 1, Court 2, and Court 3 side by side, with the entry point marked."
-                style={{ width: '100%', borderRadius: 8, display: 'block' }}
-              />
-            </div>
-          </div>
-        )}
 
         {configMissing ? (
           <div
