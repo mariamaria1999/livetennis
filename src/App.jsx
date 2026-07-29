@@ -462,9 +462,18 @@ function CourtCard({ courtKey, court, now, onReport }) {
   );
 }
 
-function LegendDot({ color, label, ring, hatched }) {
+function LegendDot({ color, label, ring, hatched, title }) {
   return (
-    <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+    <span
+      title={title}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 5,
+        cursor: title ? 'help' : 'default',
+        borderBottom: title ? `1px dotted ${COLORS.line}66` : 'none',
+      }}
+    >
       <span
         style={{
           width: 10,
@@ -472,8 +481,10 @@ function LegendDot({ color, label, ring, hatched }) {
           borderRadius: 3,
           background: hatched
             ? 'repeating-linear-gradient(45deg, rgba(22,22,21,0.28), rgba(22,22,21,0.28) 2px, transparent 2px, transparent 4px)'
+            : ring
+            ? COLORS.surface
             : color,
-          boxShadow: ring ? `0 0 0 2px ${COLORS.yellow}` : 'none',
+          border: ring ? `2px solid ${color}` : 'none',
           display: 'inline-block',
         }}
       />
@@ -526,8 +537,8 @@ function ScheduleTable({ courts, now }) {
       };
     if (status === 'busy') return { ...base, background: COLORS.clay };
     if (status === 'free') return { ...base, background: COLORS.green };
-    if (status === 'now-busy') return { ...base, background: COLORS.clay, boxShadow: `0 0 0 2px ${COLORS.yellow}` };
-    if (status === 'now-free') return { ...base, background: COLORS.green, boxShadow: `0 0 0 2px ${COLORS.yellow}` };
+    if (status === 'now-busy') return { ...base, background: COLORS.surface, border: `2.5px solid ${COLORS.clay}` };
+    if (status === 'now-free') return { ...base, background: COLORS.surface, border: `2.5px solid ${COLORS.green}` };
     return base;
   };
 
@@ -605,23 +616,11 @@ function ScheduleTable({ courts, now }) {
           opacity: 0.7,
         }}
       >
-        <LegendDot color={COLORS.green} label="Free" />
+        <LegendDot color={COLORS.green} label="Free" title="Hours with no reports assume free." />
         <LegendDot color={COLORS.clay} label="Busy" />
         <LegendDot color={COLORS.clay} ring label="Now" />
         <LegendDot hatched label="Not yet today" />
       </div>
-      <p
-        style={{
-          fontFamily: "'Archivo', sans-serif",
-          fontSize: 11,
-          color: COLORS.line,
-          opacity: 0.55,
-          marginTop: 8,
-          maxWidth: 480,
-        }}
-      >
-        Hours with no reports assume free. 
-      </p>
     </div>
   );
 }
@@ -1188,23 +1187,14 @@ export default function CourtWatch() {
             >
               {COURT_KEYS.map((key) => {
                 const c = courts[key];
-                if (c.type === 'reserved') {
-                  return (
-                    <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span
-                        style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS.reserved, display: 'inline-block' }}
-                      />
-                      {c.name}: book via Varaamo
-                    </div>
-                  );
-                }
+                if (c.type === 'reserved') return null;
                 const { statusLabel, displayBusy } = deriveCourtState(c, now);
                 return (
-                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span
                       style={{
-                        width: 8,
-                        height: 8,
+                        width: 12,
+                        height: 12,
                         borderRadius: '50%',
                         background: displayBusy ? COLORS.clay : COLORS.green,
                         display: 'inline-block',
