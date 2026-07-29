@@ -494,6 +494,7 @@ function LegendDot({ color, label, ring, hatched, title }) {
 }
 
 function ScheduleTable({ courts, now }) {
+  const [showLegend, setShowLegend] = useState(false);
   const hours = [];
   for (let h = OPEN_HOUR; h < CLOSE_HOUR; h++) hours.push(h);
   const todayKey = new Date().toDateString();
@@ -537,25 +538,70 @@ function ScheduleTable({ courts, now }) {
       };
     if (status === 'busy') return { ...base, background: COLORS.clay };
     if (status === 'free') return { ...base, background: COLORS.green };
-    if (status === 'now-busy') return { ...base, background: COLORS.surface, border: `2.5px solid ${COLORS.clay}` };
-    if (status === 'now-free') return { ...base, background: COLORS.surface, border: `2.5px solid ${COLORS.green}` };
+    if (status === 'now-busy') return { ...base, background: 'transparent', border: `2.5px solid ${COLORS.clay}` };
+    if (status === 'now-free') return { ...base, background: 'transparent', border: `2.5px solid ${COLORS.green}` };
     return base;
   };
 
   return (
     <div style={{ marginTop: 40 }}>
-      <div
-        style={{
-          fontFamily: "'Archivo', sans-serif",
-          fontSize: 12,
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          color: COLORS.line,
-          opacity: 0.55,
-          marginBottom: 14,
-        }}
-      >
-        Today's schedule · {OPEN_HOUR}:00–{CLOSE_HOUR}:00
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <div
+          style={{
+            fontFamily: "'Archivo', sans-serif",
+            fontSize: 12,
+            letterSpacing: '0.12em',
+            textTransform: 'uppercase',
+            color: COLORS.line,
+            opacity: 0.55,
+          }}
+        >
+          TODAY · {OPEN_HOUR}:00–{CLOSE_HOUR}:00
+        </div>
+        <span
+          style={{ position: 'relative', display: 'inline-flex' }}
+          onMouseEnter={() => setShowLegend(true)}
+          onMouseLeave={() => setShowLegend(false)}
+        >
+          <span
+            onClick={() => setShowLegend((o) => !o)}
+            role="button"
+            aria-label="Show legend"
+            style={{ fontSize: 14, lineHeight: 1, cursor: 'pointer' }}
+          >
+            🎾
+          </span>
+          {showLegend && (
+            <div
+              onClick={() => setShowLegend(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 40, background: 'transparent' }}
+            />
+          )}
+          {showLegend && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                left: 0,
+                background: COLORS.surface,
+                border: `1px solid ${COLORS.border}`,
+                borderRadius: 4,
+                boxShadow: '0 8px 24px rgba(17,17,17,0.12)',
+                padding: '12px 14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+                whiteSpace: 'nowrap',
+                zIndex: 50,
+              }}
+            >
+              <LegendDot color={COLORS.green} label="Free" title="Hours with no reports assume free." />
+              <LegendDot color={COLORS.clay} label="Busy" />
+              <LegendDot color={COLORS.clay} ring label="Now" />
+            </div>
+          )}
+        </span>
       </div>
       <div style={{ overflowX: 'auto' }}>
         <table style={{ borderCollapse: 'separate', borderSpacing: 5 }}>
@@ -603,23 +649,6 @@ function ScheduleTable({ courts, now }) {
             ))}
           </tbody>
         </table>
-      </div>
-      <div
-        style={{
-          display: 'flex',
-          gap: 14,
-          flexWrap: 'wrap',
-          marginTop: 16,
-          fontFamily: "'Archivo', sans-serif",
-          fontSize: 11,
-          color: COLORS.line,
-          opacity: 0.7,
-        }}
-      >
-        <LegendDot color={COLORS.green} label="Free" title="Hours with no reports assume free." />
-        <LegendDot color={COLORS.clay} label="Busy" />
-        <LegendDot color={COLORS.clay} ring label="Now" />
-        <LegendDot hatched label="Not yet today" />
       </div>
     </div>
   );
