@@ -291,6 +291,7 @@ function ReservationCard({ name }) {
 
 function CourtCard({ courtKey, court, now, onReport }) {
   const [toast, setToast] = useState('');
+  const [mapOpen, setMapOpen] = useState(false);
   const toastTimer = useRef(null);
 
   const showToast = (msg) => {
@@ -352,6 +353,62 @@ function CourtCard({ courtKey, court, now, onReport }) {
           }}
         >
           {court.name}
+        </span>
+        <span
+          style={{ position: 'relative', display: 'inline-flex' }}
+          onMouseEnter={() => setMapOpen(true)}
+          onMouseLeave={() => setMapOpen(false)}
+        >
+          <button
+            onClick={() => setMapOpen((o) => !o)}
+            aria-label="Which court is which"
+            style={{
+              background: 'transparent',
+              border: `1px solid ${COLORS.line}55`,
+              borderRadius: '50%',
+              width: 18,
+              height: 18,
+              fontSize: 11,
+              fontWeight: 600,
+              lineHeight: 1,
+              color: COLORS.line,
+              opacity: 0.6,
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            ?
+          </button>
+          {mapOpen && (
+            <div
+              onClick={() => setMapOpen(false)}
+              style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'transparent' }}
+            />
+          )}
+          {mapOpen && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                position: 'absolute',
+                top: 'calc(100% + 8px)',
+                right: 0,
+                width: 280,
+                maxWidth: '80vw',
+                background: COLORS.surface,
+                border: `1px solid ${COLORS.border}`,
+                borderRadius: 4,
+                boxShadow: '0 8px 24px rgba(17,17,17,0.12)',
+                padding: 10,
+                zIndex: 70,
+              }}
+            >
+              <img
+                src={COURT_MAP_IMAGE}
+                alt="Map showing Court 1, Court 2, and Court 3 side by side, with the entry point marked."
+                style={{ width: '100%', borderRadius: 4, display: 'block' }}
+              />
+            </div>
+          )}
         </span>
       </div>
 
@@ -509,7 +566,6 @@ function LegendDot({ color, label, ring, hatched, title }) {
 }
 
 function ScheduleTable({ courts, now }) {
-  const [mapOpen, setMapOpen] = useState(false);
   const hours = [];
   for (let h = OPEN_HOUR; h < CLOSE_HOUR; h++) hours.push(h);
   const todayKey = new Date().toDateString();
@@ -520,11 +576,22 @@ function ScheduleTable({ courts, now }) {
       .filter((r) => new Date(r.t).toDateString() === todayKey)
       .map((r) => ({ t: r.t, busy: r.busy }));
 
-  const stateAt = (events, t) => {
+  const FREE_CONFIRM_MS = 20 * 60 * 1000;
+
+  const stateAt = (events, t, requireConfirmedFree) => {
     let state = null;
+    let stateSince = null;
     for (const e of events) {
-      if (e.t <= t) state = e.busy;
-      else break;
+      if (e.t <= t) {
+        state = e.busy;
+        stateSince = e.t;
+      } else break;
+    }
+    // For historical (completed) hours: a "free" report only counts once it's held for
+    // at least 20 min — otherwise that hour is still recorded as busy. A "busy" report
+    // always counts immediately, with no minimum duration.
+    if (requireConfirmedFree && state === false && t - stateSince < FREE_CONFIRM_MS) {
+      return true;
     }
     return state;
   };
@@ -535,7 +602,9 @@ function ScheduleTable({ courts, now }) {
     const hourStart = hourStartDate.getTime();
     const hourEnd = hourStart + 60 * 60 * 1000;
     if (hourStart >= now) return 'future';
-    const busy = stateAt(eventsFor(court), Math.min(hourEnd, now)) === true;
+    const isCurrentHour = hourEnd > now; // still in progress -> show real-time status, no delay
+    const evalAt = Math.min(hourEnd, now);
+    const busy = stateAt(eventsFor(court), evalAt, !isCurrentHour) === true;
     return busy ? 'busy' : 'free';
   };
 
@@ -602,23 +671,6 @@ function ScheduleTable({ courts, now }) {
                     whiteSpace: 'nowrap',
                   }}
                 >
-                  <button
-                    onClick={() => setMapOpen(true)}
-                    aria-label="Which court is which"
-                    title="Which court is which?"
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      padding: 0,
-                      marginRight: 4,
-                      fontSize: 12,
-                      lineHeight: 1,
-                      cursor: 'pointer',
-                      verticalAlign: 'middle',
-                    }}
-                  >
-                    📍
-                  </button>
                   {courts[key].name}
                 </td>
                 {hours.map((h) => (
@@ -631,56 +683,6 @@ function ScheduleTable({ courts, now }) {
           </tbody>
         </table>
       </div>
-
-      {mapOpen && (
-        <div
-          onClick={() => setMapOpen(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 20,
-            zIndex: 80,
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: COLORS.surface,
-              borderRadius: 4,
-              padding: 16,
-              maxWidth: 640,
-              width: '100%',
-              maxHeight: '85vh',
-              overflow: 'auto',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12,
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 600, color: COLORS.bg }}>
-                Which court is which?
-              </span>
-              <button
-                onClick={() => setMapOpen(false)}
-                aria-label="Close"
-                style={{ background: 'transparent', border: 'none', fontSize: 20, cursor: 'pointer', color: COLORS.bg, lineHeight: 1 }}
-              >
-                &times;
-              </button>
-            </div>
-            <img
-              src={COURT_MAP_IMAGE}
-              alt="Map showing Court 1, Court 2, and Court 3 side by side, with the entry point marked."
-              style={{ width: '100%', borderRadius: 8, display: 'block' }}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
