@@ -868,23 +868,40 @@ const waitingRef = ref(db, 'waiting');
 
 function WaitingPanel() {
   const [count, setCount] = useState(0);
+  const [updatedAt, setUpdatedAt] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     const unsubscribe = onValue(waitingRef, (snapshot) => {
-      const val = snapshot.exists() ? snapshot.val() : 0;
-      setCount(typeof val === 'number' ? val : 0);
+      const val = snapshot.exists() ? snapshot.val() : null;
+      if (val && typeof val === 'object') {
+        setCount(typeof val.count === 'number' ? val.count : 0);
+        setUpdatedAt(typeof val.t === 'number' ? val.t : null);
+      } else {
+        setCount(typeof val === 'number' ? val : 0);
+        setUpdatedAt(null);
+      }
       setLoaded(true);
     });
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(tick);
+  }, []);
+
   const adjust = (delta) => {
     runTransaction(waitingRef, (current) => {
-      const base = typeof current === 'number' ? current : 0;
-      return Math.max(0, base + delta);
+      const base = current && typeof current === 'object' ? current.count : typeof current === 'number' ? current : 0;
+      const nextCount = Math.max(0, (typeof base === 'number' ? base : 0) + delta);
+      return { count: nextCount, t: Date.now() };
     });
   };
+
+  const mood = count === 0 ? '😌' : count <= 2 ? '🙂' : '😅';
+  const moodText = count === 0 ? 'All clear!' : count <= 2 ? 'A little wait' : 'Getting busy';
 
   return (
     <div
@@ -912,19 +929,27 @@ function WaitingPanel() {
       >
         Waiting
       </span>
-      <span
-        style={{
-          fontFamily: "'Archivo', sans-serif",
-          fontSize: 40,
-          fontWeight: 700,
-          color: COLORS.line,
-          lineHeight: 1,
-        }}
-      >
-        {loaded ? count : '–'}
-      </span>
-      <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 12, color: COLORS.line, opacity: 0.6 }}>
-        {count === 1 ? 'group waiting' : 'groups waiting'}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{ fontSize: 34, lineHeight: 1 }}>{mood}</span>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span
+            style={{
+              fontFamily: "'Archivo', sans-serif",
+              fontSize: 34,
+              fontWeight: 700,
+              color: COLORS.line,
+              lineHeight: 1,
+            }}
+          >
+            {loaded ? count : '–'}
+          </span>
+          <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 12, color: COLORS.line, opacity: 0.6 }}>
+            {count === 1 ? 'group waiting' : 'groups waiting'}
+          </span>
+        </div>
+      </div>
+      <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 12, fontStyle: 'italic', color: COLORS.line, opacity: 0.55 }}>
+        {moodText}
       </span>
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
         <button
@@ -966,6 +991,11 @@ function WaitingPanel() {
           +
         </button>
       </div>
+      {updatedAt && (
+        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 11, color: COLORS.muted }}>
+          Updated {formatAgo(now - updatedAt)}
+        </span>
+      )}
     </div>
   );
 }
@@ -1058,22 +1088,32 @@ function AboutPopover({ onClose }) {
         textAlign: 'left',
       }}
     >
-      <section style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.75, margin: 0, lineHeight: 1.5 }}>
+      <section
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          background: COLORS.page,
+          border: `1px solid ${COLORS.border}`,
+          borderRadius: 4,
+          padding: 14,
+        }}
+      >
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.85, margin: 0, lineHeight: 1.5 }}>
           You arrive at the courts.
           <br />
           They're full.
           <br />
           You wait... and wait... and waaaaiiiittttt.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.75, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.85, margin: 0, lineHeight: 1.5 }}>
           That's why I built this tool to share live court status. I need your help! A quick tap on{' '}
           <strong>Free</strong> or <strong>Busy</strong> helps keep the information up to date for everyone.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.75, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.85, margin: 0, lineHeight: 1.5 }}>
           Thus, you can check the latest reports and estimated finish times.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.75, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.85, margin: 0, lineHeight: 1.5 }}>
           I hope it helps a bit... or maybe even a lot.
         </p>
       </section>
