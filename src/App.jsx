@@ -916,7 +916,7 @@ async function archiveOldReports(courts) {
 const courtsRef = ref(db, 'courts');
 const waitingRef = ref(db, 'waiting');
 
-function WaitingPanel({ onIncrement }) {
+function WaitingPanel({ onCountChange }) {
   const [count, setCount] = useState(0);
   const [updatedAt, setUpdatedAt] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -971,10 +971,10 @@ function WaitingPanel({ onIncrement }) {
       return { count: nextCount, t: Date.now() };
     });
     fireBurst(originX);
-    if (delta > 0 && onIncrement) {
+    if (onCountChange) {
       const committed = result && result.snapshot ? result.snapshot.val() : null;
       const newCount = committed && typeof committed.count === 'number' ? committed.count : null;
-      if (newCount != null) onIncrement(newCount);
+      if (newCount != null) onCountChange(newCount);
     }
   };
 
@@ -1376,18 +1376,23 @@ export default function CourtWatch() {
   );
 
   // If anyone is waiting, both courts must already be occupied — auto-log that inference
-  // (attributed to "Waiting queue", not a random nickname, so it reads as system-inferred
-  // rather than a real on-court observation) and only for courts not already marked busy,
-  // so this doesn't spam a new entry on every single queue increment.
-  const handleWaitingIncrement = useCallback(
+  // (attributed to the 🤖 emoji, not a random nickname, so it reads as system-inferred rather
+  // than a real on-court observation). Symmetrically, once the queue empties out, assume
+  // the courts are free again. Only touches courts that aren't already in that state, so
+  // this doesn't spam a new entry on every single queue adjustment.
+  const handleWaitingCountChange = useCallback(
     (newCount) => {
-      if (newCount < 1) return;
+      const wantBusy = newCount >= 1;
+      const wantFree = newCount === 0;
+      if (!wantBusy && !wantFree) return;
       ['court2', 'court3'].forEach((key) => {
         const court = courts[key];
         if (!court) return;
         const { displayBusy } = deriveCourtState(court, Date.now());
-        if (!displayBusy) {
-          submitReport(key, true, 'Waiting queue', 'observed');
+        if (wantBusy && !displayBusy) {
+          submitReport(key, true, '🤖', 'observed');
+        } else if (wantFree && displayBusy) {
+          submitReport(key, false, '🤖', undefined);
         }
       });
     },
@@ -1542,7 +1547,7 @@ export default function CourtWatch() {
               <div style={{ flex: '1 1 400px', minWidth: 0 }}>
                 <ScheduleTable courts={courts} now={now} />
               </div>
-              <WaitingPanel onIncrement={handleWaitingIncrement} />
+              <WaitingPanel onCountChange={handleWaitingCountChange} />
             </div>
 
             <div
