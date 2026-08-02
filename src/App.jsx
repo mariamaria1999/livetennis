@@ -165,24 +165,25 @@ function deriveAvgDurationMin(reports) {
   return Math.round(recent.reduce((a, b) => a + b, 0) / recent.length);
 }
 
-function DigitTiles({ text }) {
+function DigitTiles({ text, size = 17, color = COLORS.bg }) {
+  const tileWidth = Math.round(size * 1.3);
   return (
-    <span style={{ display: 'inline-flex', gap: 4 }}>
+    <span style={{ display: 'inline-flex', gap: Math.max(3, Math.round(size * 0.24)) }}>
       {text.split('').map((ch, i) => (
         <span
           key={i}
           style={{
             position: 'relative',
-            minWidth: ch === ':' ? 10 : 22,
+            minWidth: ch === ':' ? Math.round(size * 0.6) : tileWidth,
             textAlign: 'center',
             background: COLORS.surface,
             border: `1.5px solid ${COLORS.muted}`,
             borderRadius: 6,
-            padding: '6px 3px',
+            padding: `${Math.round(size * 0.35)}px ${Math.round(size * 0.18)}px`,
             fontFamily: "'Orbitron', 'IBM Plex Mono', monospace",
-            fontSize: 17,
+            fontSize: size,
             fontWeight: 700,
-            color: COLORS.bg,
+            color: color,
             overflow: 'hidden',
             display: 'inline-block',
           }}
@@ -736,7 +737,7 @@ function ScheduleTable({ courts, now }) {
   );
 }
 
-function ModeModal({ nickname, onSubmit, onCancel }) {
+function ModeModal({ nickname, onShuffle, showModeChoice, onSubmit, onCancel }) {
   const [mode, setMode] = useState('self');
 
   const modeOptions = [
@@ -788,41 +789,53 @@ function ModeModal({ nickname, onSubmit, onCancel }) {
           gap: 16,
         }}
       >
-        <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 600, color: COLORS.line }}>
-          Reporting as {nickname}
-        </span>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 11, color: COLORS.line, opacity: 0.7 }}>
-            Is this you playing, or someone else?
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 11, color: COLORS.line, opacity: 0.6 }}>
+            Reporting as
           </span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {modeOptions.map((opt) => {
-              const selected = mode === opt.key;
-              return (
-                <button key={opt.key} onClick={() => setMode(opt.key)} style={radioRowStyle(selected)}>
-                  <span
-                    style={{
-                      width: 15,
-                      height: 15,
-                      borderRadius: '50%',
-                      border: `1.5px solid ${COLORS.bg}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {selected && (
-                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: COLORS.bg, display: 'block' }} />
-                    )}
-                  </span>
-                  {opt.label}
-                </button>
-              );
-            })}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 18, fontWeight: 700, color: COLORS.line }}>
+              {nickname}
+            </span>
+            <button onClick={onShuffle} style={linkStyle(COLORS.line)}>
+              Shuffle
+            </button>
           </div>
         </div>
+
+        {showModeChoice && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 11, color: COLORS.line, opacity: 0.7 }}>
+              Is this you playing, or someone else?
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {modeOptions.map((opt) => {
+                const selected = mode === opt.key;
+                return (
+                  <button key={opt.key} onClick={() => setMode(opt.key)} style={radioRowStyle(selected)}>
+                    <span
+                      style={{
+                        width: 15,
+                        height: 15,
+                        borderRadius: '50%',
+                        border: `1.5px solid ${COLORS.bg}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {selected && (
+                        <span style={{ width: 7, height: 7, borderRadius: '50%', background: COLORS.bg, display: 'block' }} />
+                      )}
+                    </span>
+                    {opt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', alignItems: 'center' }}>
           <button onClick={onCancel} style={linkStyle(COLORS.line)}>
@@ -894,9 +907,8 @@ function WaitingPanel() {
   const [updatedAt, setUpdatedAt] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [now, setNow] = useState(Date.now());
-  const [bounceKey, setBounceKey] = useState(0);
-  const [bouncing, setBouncing] = useState(false);
-  const bounceTimer = useRef(null);
+  const [burst, setBurst] = useState([]);
+  const burstTimer = useRef(null);
 
   useEffect(() => {
     const unsubscribe = onValue(waitingRef, (snapshot) => {
@@ -918,22 +930,37 @@ function WaitingPanel() {
     return () => clearInterval(tick);
   }, []);
 
-  useEffect(() => () => bounceTimer.current && clearTimeout(bounceTimer.current), []);
+  useEffect(() => () => burstTimer.current && clearTimeout(burstTimer.current), []);
 
-  const adjust = (delta) => {
+  const fireBurst = (originX) => {
+    const particles = Array.from({ length: 12 }).map((_, i) => {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 36 + Math.random() * 46;
+      return {
+        id: `${Date.now()}-${i}`,
+        left: originX,
+        dx: Math.cos(angle) * distance,
+        dy: Math.sin(angle) * distance,
+        delay: Math.random() * 0.12,
+        size: 14 + Math.random() * 8,
+      };
+    });
+    setBurst(particles);
+    if (burstTimer.current) clearTimeout(burstTimer.current);
+    burstTimer.current = setTimeout(() => setBurst([]), 1100);
+  };
+
+  const adjust = (delta, originX) => {
     runTransaction(waitingRef, (current) => {
       const base = current && typeof current === 'object' ? current.count : typeof current === 'number' ? current : 0;
       const nextCount = Math.max(0, (typeof base === 'number' ? base : 0) + delta);
       return { count: nextCount, t: Date.now() };
     });
-    setBounceKey((k) => k + 1);
-    setBouncing(true);
-    if (bounceTimer.current) clearTimeout(bounceTimer.current);
-    bounceTimer.current = setTimeout(() => setBouncing(false), 1600);
+    fireBurst(originX);
   };
 
   const mood = count === 0 ? '😌' : count <= 2 ? '🙂' : '😅';
-  const moodText = count === 0 ? 'All clear!' : count <= 2 ? 'A little wait' : 'Getting busy';
+  const tennisGreen = '#7CB305';
 
   return (
     <div
@@ -952,34 +979,31 @@ function WaitingPanel() {
       }}
     >
       <style>{`
-        @keyframes courtWatchBallBounce {
-          0%   { transform: translateY(0) scale(1); opacity: 1; }
-          20%  { transform: translateY(-40px) scale(1.05); }
-          40%  { transform: translateY(0) scale(1); }
-          55%  { transform: translateY(-40px) scale(1.05); }
-          72%  { transform: translateY(0) scale(1); }
-          82%  { transform: translateY(-14px) scale(1); }
-          92%  { transform: translateY(0) scale(1); }
-          100% { transform: translateY(0) scale(0.9); opacity: 0; }
+        @keyframes courtWatchFirework {
+          0%   { transform: translate(0, 0) scale(0.5); opacity: 1; }
+          65%  { opacity: 1; }
+          100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; }
         }
       `}</style>
-      {bouncing && (
+      {burst.map((p) => (
         <span
-          key={bounceKey}
+          key={p.id}
           style={{
             position: 'absolute',
-            bottom: 50,
-            left: '50%',
-            marginLeft: -13,
-            fontSize: 26,
+            bottom: 46,
+            left: p.left,
+            marginLeft: -9,
+            fontSize: p.size,
             lineHeight: 1,
-            animation: 'courtWatchBallBounce 1.6s ease-out',
+            '--dx': `${p.dx}px`,
+            '--dy': `${-Math.abs(p.dy)}px`,
+            animation: `courtWatchFirework 1.1s ease-out ${p.delay}s both`,
             pointerEvents: 'none',
           }}
         >
           🎾
         </span>
-      )}
+      ))}
       <span
         style={{
           fontFamily: "'Archivo', sans-serif",
@@ -992,21 +1016,18 @@ function WaitingPanel() {
       >
         Waiting
       </span>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-        <span style={{ fontSize: 34, lineHeight: 1 }}>{mood}</span>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <DigitTiles text={loaded ? String(count) : '–'} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <DigitTiles text={loaded ? String(count) : '–'} size={26} color={tennisGreen} />
           <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 12, color: COLORS.line, opacity: 0.6 }}>
             {count === 1 ? 'group waiting' : 'groups waiting'}
           </span>
-          <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 12, fontStyle: 'italic', color: COLORS.line, opacity: 0.55 }}>
-            {moodText}
-          </span>
         </div>
+        <span style={{ fontSize: 40, lineHeight: 1 }}>{mood}</span>
       </div>
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
         <button
-          onClick={() => adjust(-1)}
+          onClick={() => adjust(-1, '30%')}
           disabled={count === 0}
           aria-label="One group left the queue"
           style={{
@@ -1026,7 +1047,7 @@ function WaitingPanel() {
           −
         </button>
         <button
-          onClick={() => adjust(1)}
+          onClick={() => adjust(1, '70%')}
           aria-label="One group joined the queue"
           style={{
             flex: 1,
@@ -1314,17 +1335,10 @@ export default function CourtWatch() {
     [saveShared]
   );
 
-  const requestReport = useCallback(
-    (courtKey, busy) => {
-      if (!busy) {
-        submitReport(courtKey, false, nickname, undefined);
-        return;
-      }
-      setPendingReport({ courtKey, busy });
-      setModeModalOpen(true);
-    },
-    [nickname, submitReport]
-  );
+  const requestReport = useCallback((courtKey, busy) => {
+    setPendingReport({ courtKey, busy });
+    setModeModalOpen(true);
+  }, []);
 
   const handleModeSubmit = useCallback(
     (mode) => {
@@ -1552,7 +1566,13 @@ export default function CourtWatch() {
       </div>
 
       {modeModalOpen && (
-        <ModeModal nickname={nickname} onSubmit={handleModeSubmit} onCancel={handleModeCancel} />
+        <ModeModal
+          nickname={nickname}
+          onShuffle={shuffleNickname}
+          showModeChoice={!!pendingReport && pendingReport.busy === true}
+          onSubmit={handleModeSubmit}
+          onCancel={handleModeCancel}
+        />
       )}
     </div>
   );
