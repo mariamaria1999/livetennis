@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { ref, get, set, onValue } from 'firebase/database';
+import { ref, get, set, onValue, runTransaction } from 'firebase/database';
 import { db, firebaseConfigured } from './firebase';
 
 const REPORTS_MAX = 300; // safety net only — daily archival is what actually keeps this bounded
@@ -622,7 +622,7 @@ function ScheduleTable({ courts, now }) {
   };
 
   return (
-    <div style={{ marginTop: 40 }}>
+    <div>
       <div
         style={{
           fontFamily: "'Archivo', sans-serif",
@@ -864,6 +864,111 @@ async function archiveOldReports(courts) {
 }
 
 const courtsRef = ref(db, 'courts');
+const waitingRef = ref(db, 'waiting');
+
+function WaitingPanel() {
+  const [count, setCount] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onValue(waitingRef, (snapshot) => {
+      const val = snapshot.exists() ? snapshot.val() : 0;
+      setCount(typeof val === 'number' ? val : 0);
+      setLoaded(true);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const adjust = (delta) => {
+    runTransaction(waitingRef, (current) => {
+      const base = typeof current === 'number' ? current : 0;
+      return Math.max(0, base + delta);
+    });
+  };
+
+  return (
+    <div
+      style={{
+        background: COLORS.surface,
+        border: `1px solid ${COLORS.border}`,
+        borderRadius: 2,
+        padding: 20,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+        minWidth: 160,
+        flex: '0 0 auto',
+      }}
+    >
+      <span
+        style={{
+          fontFamily: "'Archivo', sans-serif",
+          fontSize: 12,
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: COLORS.line,
+          opacity: 0.55,
+        }}
+      >
+        Waiting
+      </span>
+      <span
+        style={{
+          fontFamily: "'Archivo', sans-serif",
+          fontSize: 40,
+          fontWeight: 700,
+          color: COLORS.line,
+          lineHeight: 1,
+        }}
+      >
+        {loaded ? count : '–'}
+      </span>
+      <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 12, color: COLORS.line, opacity: 0.6 }}>
+        {count === 1 ? 'group waiting' : 'groups waiting'}
+      </span>
+      <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+        <button
+          onClick={() => adjust(-1)}
+          disabled={count === 0}
+          aria-label="One group left the queue"
+          style={{
+            flex: 1,
+            fontFamily: "'Archivo', sans-serif",
+            fontSize: 18,
+            fontWeight: 600,
+            color: COLORS.line,
+            background: 'transparent',
+            border: `1px solid ${COLORS.border}`,
+            borderRadius: 2,
+            padding: '8px 0',
+            cursor: count === 0 ? 'default' : 'pointer',
+            opacity: count === 0 ? 0.4 : 1,
+          }}
+        >
+          −
+        </button>
+        <button
+          onClick={() => adjust(1)}
+          aria-label="One group joined the queue"
+          style={{
+            flex: 1,
+            fontFamily: "'Archivo', sans-serif",
+            fontSize: 18,
+            fontWeight: 600,
+            color: COLORS.onAccent,
+            background: COLORS.bg,
+            border: `1px solid ${COLORS.bg}`,
+            borderRadius: 2,
+            padding: '8px 0',
+            cursor: 'pointer',
+          }}
+        >
+          +
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function CopyIcon() {
   return (
@@ -1223,7 +1328,12 @@ export default function CourtWatch() {
           </div>
         ) : (
           <>
-            <ScheduleTable courts={courts} now={now} />
+            <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap', marginTop: 40 }}>
+              <div style={{ flex: '1 1 400px', minWidth: 0 }}>
+                <ScheduleTable courts={courts} now={now} />
+              </div>
+              <WaitingPanel />
+            </div>
 
             <div
               style={{
