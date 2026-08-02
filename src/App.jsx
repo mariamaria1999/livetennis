@@ -929,7 +929,7 @@ function WaitingPanel() {
     setBounceKey((k) => k + 1);
     setBouncing(true);
     if (bounceTimer.current) clearTimeout(bounceTimer.current);
-    bounceTimer.current = setTimeout(() => setBouncing(false), 700);
+    bounceTimer.current = setTimeout(() => setBouncing(false), 1600);
   };
 
   const mood = count === 0 ? '😌' : count <= 2 ? '🙂' : '😅';
@@ -954,10 +954,12 @@ function WaitingPanel() {
       <style>{`
         @keyframes courtWatchBallBounce {
           0%   { transform: translateY(0) scale(1); opacity: 1; }
-          25%  { transform: translateY(-30px) scale(1.05); }
-          50%  { transform: translateY(0) scale(1); }
-          70%  { transform: translateY(-12px) scale(1); }
-          85%  { transform: translateY(0) scale(1); }
+          20%  { transform: translateY(-40px) scale(1.05); }
+          40%  { transform: translateY(0) scale(1); }
+          55%  { transform: translateY(-40px) scale(1.05); }
+          72%  { transform: translateY(0) scale(1); }
+          82%  { transform: translateY(-14px) scale(1); }
+          92%  { transform: translateY(0) scale(1); }
           100% { transform: translateY(0) scale(0.9); opacity: 0; }
         }
       `}</style>
@@ -966,12 +968,12 @@ function WaitingPanel() {
           key={bounceKey}
           style={{
             position: 'absolute',
-            bottom: 44,
+            bottom: 50,
             left: '50%',
-            marginLeft: -12,
-            fontSize: 24,
+            marginLeft: -13,
+            fontSize: 26,
             lineHeight: 1,
-            animation: 'courtWatchBallBounce 0.7s ease-out',
+            animation: 'courtWatchBallBounce 1.6s ease-out',
             pointerEvents: 'none',
           }}
         >
@@ -992,26 +994,16 @@ function WaitingPanel() {
       </span>
       <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
         <span style={{ fontSize: 34, lineHeight: 1 }}>{mood}</span>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span
-            style={{
-              fontFamily: "'Archivo', sans-serif",
-              fontSize: 34,
-              fontWeight: 700,
-              color: COLORS.line,
-              lineHeight: 1,
-            }}
-          >
-            {loaded ? count : '–'}
-          </span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <DigitTiles text={loaded ? String(count) : '–'} />
           <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 12, color: COLORS.line, opacity: 0.6 }}>
             {count === 1 ? 'group waiting' : 'groups waiting'}
           </span>
+          <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 12, fontStyle: 'italic', color: COLORS.line, opacity: 0.55 }}>
+            {moodText}
+          </span>
         </div>
       </div>
-      <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 12, fontStyle: 'italic', color: COLORS.line, opacity: 0.55 }}>
-        {moodText}
-      </span>
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
         <button
           onClick={() => adjust(-1)}
