@@ -793,12 +793,26 @@ function ModeModal({ nickname, onShuffle, showModeChoice, onSubmit, onCancel }) 
           <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 11, color: COLORS.line, opacity: 0.6 }}>
             Reporting as
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontFamily: "'Archivo', sans-serif", fontSize: 18, fontWeight: 700, color: COLORS.line }}>
               {nickname}
             </span>
-            <button onClick={onShuffle} style={linkStyle(COLORS.line)}>
-              Shuffle
+            <button
+              onClick={onShuffle}
+              aria-label="Shuffle nickname"
+              title="Shuffle"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'transparent',
+                border: 'none',
+                color: COLORS.muted,
+                cursor: 'pointer',
+                padding: 4,
+              }}
+            >
+              <ShuffleIcon />
             </button>
           </div>
         </div>
@@ -902,7 +916,7 @@ async function archiveOldReports(courts) {
 const courtsRef = ref(db, 'courts');
 const waitingRef = ref(db, 'waiting');
 
-function WaitingPanel() {
+function WaitingPanel({ onIncrement }) {
   const [count, setCount] = useState(0);
   const [updatedAt, setUpdatedAt] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -950,13 +964,18 @@ function WaitingPanel() {
     burstTimer.current = setTimeout(() => setBurst([]), 1100);
   };
 
-  const adjust = (delta, originX) => {
-    runTransaction(waitingRef, (current) => {
+  const adjust = async (delta, originX) => {
+    const result = await runTransaction(waitingRef, (current) => {
       const base = current && typeof current === 'object' ? current.count : typeof current === 'number' ? current : 0;
       const nextCount = Math.max(0, (typeof base === 'number' ? base : 0) + delta);
       return { count: nextCount, t: Date.now() };
     });
     fireBurst(originX);
+    if (delta > 0 && onIncrement) {
+      const committed = result && result.snapshot ? result.snapshot.val() : null;
+      const newCount = committed && typeof committed.count === 'number' ? committed.count : null;
+      if (newCount != null) onIncrement(newCount);
+    }
   };
 
   const mood = count === 0 ? '😌' : count <= 2 ? '🙂' : '😅';
@@ -1079,6 +1098,27 @@ function CopyIcon() {
     <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
       <rect x="5.5" y="5.5" width="8.5" height="8.5" rx="1.2" stroke="currentColor" strokeWidth="1.2" />
       <path d="M3 10.5V2.7A1.2 1.2 0 0 1 4.2 1.5H11" stroke="currentColor" strokeWidth="1.2" />
+    </svg>
+  );
+}
+
+function ShuffleIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+      <path
+        d="M2 4.5h2.6c.9 0 1.7.45 2.2 1.2l3.4 5.1c.5.75 1.3 1.2 2.2 1.2H14"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M2 11.5h2.6c.9 0 1.7-.45 2.2-1.2l.5-.75M9.4 6.45l.5-.75c.5-.75 1.3-1.2 2.2-1.2H14"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <path d="M12 2.5 14 4.5 12 6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 9.5 14 11.5 12 13.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -1335,6 +1375,25 @@ export default function CourtWatch() {
     [saveShared]
   );
 
+  // If anyone is waiting, both courts must already be occupied — auto-log that inference
+  // (attributed to "Waiting queue", not a random nickname, so it reads as system-inferred
+  // rather than a real on-court observation) and only for courts not already marked busy,
+  // so this doesn't spam a new entry on every single queue increment.
+  const handleWaitingIncrement = useCallback(
+    (newCount) => {
+      if (newCount < 1) return;
+      ['court2', 'court3'].forEach((key) => {
+        const court = courts[key];
+        if (!court) return;
+        const { displayBusy } = deriveCourtState(court, Date.now());
+        if (!displayBusy) {
+          submitReport(key, true, 'Waiting queue', 'observed');
+        }
+      });
+    },
+    [courts, submitReport]
+  );
+
   const requestReport = useCallback((courtKey, busy) => {
     setPendingReport({ courtKey, busy });
     setModeModalOpen(true);
@@ -1483,7 +1542,7 @@ export default function CourtWatch() {
               <div style={{ flex: '1 1 400px', minWidth: 0 }}>
                 <ScheduleTable courts={courts} now={now} />
               </div>
-              <WaitingPanel />
+              <WaitingPanel onIncrement={handleWaitingIncrement} />
             </div>
 
             <div
