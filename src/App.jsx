@@ -4,7 +4,7 @@ import { db, firebaseConfigured } from './firebase';
 
 const REPORTS_MAX = 300; // safety net only — daily archival is what actually keeps this bounded
 const STALE_FREE_MS = 2 * 60 * 60 * 1000; // a free report older than this shows as low-confidence
-const STALE_BUSY_MS = 4 * 60 * 60 * 1000; // a busy report older than this is assumed stale -> probably free
+const STALE_BUSY_MS = 2 * 60 * 60 * 1000; // a busy report older than this is assumed stale -> probably free
 const DEFAULT_SESSION_MIN = 60; // assumed game length when we have no real history yet
 const OPEN_HOUR = 8;
 const CLOSE_HOUR = 22;
@@ -339,7 +339,7 @@ function ReservationCard({ name }) {
   );
 }
 
-function CourtCard({ courtKey, court, now, onReport }) {
+function CourtCard({ courtKey, court, now, onReport, waitingCount }) {
   const [toast, setToast] = useState('');
   const [mapOpen, setMapOpen] = useState(false);
   const toastTimer = useRef(null);
@@ -497,6 +497,12 @@ function CourtCard({ courtKey, court, now, onReport }) {
       {message && (
         <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.line, opacity: 0.65, margin: 0 }}>
           {message}
+        </p>
+      )}
+
+      {!displayBusy && waitingCount >= 1 && (
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 13, color: COLORS.clay, fontWeight: 600, margin: 0 }}>
+          👀 Someone's waiting — mind confirming if this court is really free?
         </p>
       )}
 
@@ -916,7 +922,7 @@ async function archiveOldReports(courts) {
 const courtsRef = ref(db, 'courts');
 const waitingRef = ref(db, 'waiting');
 
-function WaitingPanel({ onCountChange }) {
+function WaitingPanel() {
   const [count, setCount] = useState(0);
   const [updatedAt, setUpdatedAt] = useState(null);
   const [loaded, setLoaded] = useState(false);
@@ -965,17 +971,12 @@ function WaitingPanel({ onCountChange }) {
   };
 
   const adjust = async (delta, originX) => {
-    const result = await runTransaction(waitingRef, (current) => {
+    await runTransaction(waitingRef, (current) => {
       const base = current && typeof current === 'object' ? current.count : typeof current === 'number' ? current : 0;
       const nextCount = Math.max(0, (typeof base === 'number' ? base : 0) + delta);
       return { count: nextCount, t: Date.now() };
     });
     fireBurst(originX);
-    if (onCountChange) {
-      const committed = result && result.snapshot ? result.snapshot.val() : null;
-      const newCount = committed && typeof committed.count === 'number' ? committed.count : null;
-      if (newCount != null) onCountChange(newCount);
-    }
   };
 
   const mood = count === 0 ? '😌' : count <= 2 ? '🙂' : '😅';
@@ -1221,34 +1222,34 @@ function AboutPopover({ onClose }) {
           gap: 12,
           background: COLORS.page,
           border: `1px solid ${COLORS.border}`,
-          borderRadius: 4,
+          borderRadius: 2,
           padding: 16,
         }}
       >
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
           You arrive at the courts.
           <br />
           They're full.
           <br />
           You wait... and wait... and waaaaiiiittttt.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
           That's why I built this tool—
           <br />
           to share live court status.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
           I need your help!
           <br />A quick tap on <strong>Free</strong> or <strong>Busy</strong>
           <br />
           keeps it up to date for everyone.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
           Check the latest reports
           <br />
           and estimated finish times.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
           I hope it helps a bit...
           <br />
           or maybe even a lot.
@@ -1285,6 +1286,7 @@ export default function CourtWatch() {
   const [showHelp, setShowHelp] = useState(false);
   const [modeModalOpen, setModeModalOpen] = useState(false);
   const [pendingReport, setPendingReport] = useState(null);
+  const [waitingCount, setWaitingCount] = useState(0);
 
   useEffect(() => {
     let stored = getStoredNickname();
@@ -1299,6 +1301,19 @@ export default function CourtWatch() {
     const next = generateNickname();
     setStoredNickname(next);
     setNickname(next);
+  }, []);
+
+  // Read-only view of the waiting count, independent from WaitingPanel's own subscription.
+  // This never writes to waitingRef — it's purely so CourtCard can display a hint. The two
+  // data sources (reports log vs. waiting count) stay fully separate; this is a read-time
+  // combination only, not a merge.
+  useEffect(() => {
+    const unsubscribe = onValue(waitingRef, (snapshot) => {
+      const val = snapshot.exists() ? snapshot.val() : null;
+      const c = val && typeof val === 'object' ? val.count : typeof val === 'number' ? val : 0;
+      setWaitingCount(typeof c === 'number' ? c : 0);
+    });
+    return () => unsubscribe();
   }, []);
 
   const saveShared = useCallback(async (data) => {
@@ -1375,30 +1390,6 @@ export default function CourtWatch() {
     [saveShared]
   );
 
-  // If anyone is waiting, both courts must already be occupied — auto-log that inference
-  // (attributed to the 🤖 emoji, not a random nickname, so it reads as system-inferred rather
-  // than a real on-court observation). Symmetrically, once the queue empties out, assume
-  // the courts are free again. Only touches courts that aren't already in that state, so
-  // this doesn't spam a new entry on every single queue adjustment.
-  const handleWaitingCountChange = useCallback(
-    (newCount) => {
-      const wantBusy = newCount >= 1;
-      const wantFree = newCount === 0;
-      if (!wantBusy && !wantFree) return;
-      ['court2', 'court3'].forEach((key) => {
-        const court = courts[key];
-        if (!court) return;
-        const { displayBusy } = deriveCourtState(court, Date.now());
-        if (wantBusy && !displayBusy) {
-          submitReport(key, true, '🤖', 'observed');
-        } else if (wantFree && displayBusy) {
-          submitReport(key, false, '🤖', undefined);
-        }
-      });
-    },
-    [courts, submitReport]
-  );
-
   const requestReport = useCallback((courtKey, busy) => {
     setPendingReport({ courtKey, busy });
     setModeModalOpen(true);
@@ -1435,6 +1426,19 @@ export default function CourtWatch() {
         button:focus-visible { outline: 2px solid ${COLORS.yellow}; outline-offset: 2px; }
         button { transition: opacity 0.15s; }
         button:hover { opacity: 0.85; }
+        @keyframes tennisBallEntrance {
+          0%   { transform: translate(-100vw, 0) scale(1); }
+          8%   { transform: translate(-72vw, -26px) scale(1); }
+          16%  { transform: translate(-50vw, 0) scale(1); }
+          28%  { transform: translate(-32vw, -18px) scale(1); }
+          40%  { transform: translate(-18vw, 0) scale(1); }
+          52%  { transform: translate(-9vw, -11px) scale(1); }
+          64%  { transform: translate(-4vw, 0) scale(1); }
+          76%  { transform: translate(-1.5vw, -6px) scale(1); }
+          88%  { transform: translate(-0.4vw, 0) scale(1); }
+          94%  { transform: translate(-0.1vw, -2px) scale(1); }
+          100% { transform: translate(0, 0) scale(1); }
+        }
       `}</style>
 
       <div style={{ maxWidth: 760, margin: '0 auto' }}>
@@ -1475,20 +1479,17 @@ export default function CourtWatch() {
               aria-label="About this project"
               style={{
                 flexShrink: 0,
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                border: `1px solid ${COLORS.yellow}88`,
                 background: 'transparent',
-                color: COLORS.yellow,
-                fontFamily: "'Archivo', sans-serif",
-                fontSize: 14,
-                fontWeight: 600,
+                border: 'none',
+                fontSize: 26,
+                lineHeight: 1,
                 cursor: 'pointer',
                 marginTop: 2,
+                padding: 4,
+                animation: 'tennisBallEntrance 1.6s ease-out',
               }}
             >
-              ?
+              🎾
             </button>
             {showHelp && (
               <div
@@ -1547,7 +1548,7 @@ export default function CourtWatch() {
               <div style={{ flex: '1 1 400px', minWidth: 0 }}>
                 <ScheduleTable courts={courts} now={now} />
               </div>
-              <WaitingPanel onCountChange={handleWaitingCountChange} />
+              <WaitingPanel />
             </div>
 
             <div
@@ -1562,7 +1563,7 @@ export default function CourtWatch() {
                 courts[key].type === 'reserved' ? (
                   <ReservationCard key={key} name={courts[key].name} />
                 ) : (
-                  <CourtCard key={key} courtKey={key} court={courts[key]} now={now} onReport={requestReport} />
+                  <CourtCard key={key} courtKey={key} court={courts[key]} now={now} onReport={requestReport} waitingCount={waitingCount} />
                 )
               )}
             </div>
