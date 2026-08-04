@@ -1226,37 +1226,37 @@ function AboutPopover({ onClose }) {
           padding: 16,
         }}
       >
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 900, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           You arrive at the courts.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 18, fontWeight: 500, color: COLORS.line, margin: 0, lineHeight: 1.4 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 18, fontWeight: 400, color: COLORS.line, margin: 0, lineHeight: 1.4 }}>
           They're full.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 900, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           You wait... and wait... and waaaaiiiittttt.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 500, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 400, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           That's why I built this tool—
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 900, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           to share live court status.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 18, fontWeight: 500, color: COLORS.line, margin: 0, lineHeight: 1.4 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 18, fontWeight: 400, color: COLORS.line, margin: 0, lineHeight: 1.4 }}>
           I need your help!
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 900, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           A quick tap on <span style={{ color: COLORS.green }}>Free</span> or <span style={{ color: COLORS.clay }}>Busy</span>
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 500, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 400, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           keeps it up to date for everyone.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 900, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           Check the latest reports
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 500, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 400, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           and estimated finish times.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 900, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           I hope it helps!
         </p>
       </section>
@@ -1432,17 +1432,19 @@ export default function CourtWatch() {
         button { transition: opacity 0.15s; }
         button:hover { opacity: 0.85; }
         @keyframes tennisBallEntrance {
-          0%   { transform: translate(-100vw, 0) scale(1); }
-          8%   { transform: translate(-72vw, -26px) scale(1); }
-          16%  { transform: translate(-50vw, 0) scale(1); }
-          28%  { transform: translate(-32vw, -18px) scale(1); }
-          40%  { transform: translate(-18vw, 0) scale(1); }
-          52%  { transform: translate(-9vw, -11px) scale(1); }
-          64%  { transform: translate(-4vw, 0) scale(1); }
-          76%  { transform: translate(-1.5vw, -6px) scale(1); }
-          88%  { transform: translate(-0.4vw, 0) scale(1); }
-          94%  { transform: translate(-0.1vw, -2px) scale(1); }
-          100% { transform: translate(0, 0) scale(1); }
+          0%   { transform: translate(-100vw, 0) rotate(0deg); }
+          8%   { transform: translate(-76vw, -22px) rotate(140deg); }
+          16%  { transform: translate(-58vw, 20px) rotate(280deg); }
+          24%  { transform: translate(-42vw, -24px) rotate(420deg); }
+          32%  { transform: translate(-28vw, 18px) rotate(560deg); }
+          40%  { transform: translate(-17vw, -18px) rotate(700deg); }
+          48%  { transform: translate(-9vw, 13px) rotate(840deg); }
+          56%  { transform: translate(-4vw, -12px) rotate(980deg); }
+          64%  { transform: translate(-1.5vw, 8px) rotate(1120deg); }
+          72%  { transform: translate(-0.5vw, -7px) rotate(1260deg); }
+          80%  { transform: translate(-0.1vw, 4px) rotate(1400deg); }
+          88%  { transform: translate(0, -3px) rotate(1540deg); }
+          100% { transform: translate(0, 0) rotate(1620deg); }
         }
       `}</style>
 
