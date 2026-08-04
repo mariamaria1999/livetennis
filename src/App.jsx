@@ -1219,40 +1219,45 @@ function AboutPopover({ onClose }) {
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: 12,
+          gap: 8,
           background: COLORS.page,
           border: `1px solid ${COLORS.border}`,
           borderRadius: 2,
           padding: 16,
         }}
       >
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           You arrive at the courts.
-          <br />
+        </p>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 18, fontWeight: 500, color: COLORS.line, margin: 0, lineHeight: 1.4 }}>
           They're full.
-          <br />
+        </p>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           You wait... and wait... and waaaaiiiittttt.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 500, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           That's why I built this tool—
-          <br />
+        </p>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           to share live court status.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 18, fontWeight: 500, color: COLORS.line, margin: 0, lineHeight: 1.4 }}>
           I need your help!
-          <br />A quick tap on <strong>Free</strong> or <strong>Busy</strong>
-          <br />
+        </p>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
+          A quick tap on <span style={{ color: COLORS.green }}>Free</span> or <span style={{ color: COLORS.clay }}>Busy</span>
+        </p>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 500, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           keeps it up to date for everyone.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           Check the latest reports
-          <br />
+        </p>
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 500, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
           and estimated finish times.
         </p>
-        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, opacity: 0.9, margin: 0, lineHeight: 1.6 }}>
-          I hope it helps a bit...
-          <br />
-          or maybe even a lot.
+        <p style={{ fontFamily: "'Archivo', sans-serif", fontSize: 14, fontWeight: 700, color: COLORS.line, margin: 0, lineHeight: 1.5 }}>
+          I hope it helps!
         </p>
       </section>
 
@@ -1486,7 +1491,7 @@ export default function CourtWatch() {
                 cursor: 'pointer',
                 marginTop: 2,
                 padding: 4,
-                animation: 'tennisBallEntrance 1.6s ease-out',
+                animation: 'tennisBallEntrance 3.2s ease-out',
               }}
             >
               🎾
